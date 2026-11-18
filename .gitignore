@@ -1,18 +1,23 @@
-# Build and Release Folders
-bin-debug/
-bin-release/
-[Oo]bj/
-[Bb]in/
+# Virtual environment (several GB, rebuilt from requirements.txt)
+.venv/
 
-# Other files and folders
-.settings/
+# Python cache files
+__pycache__/
+*.pyc
 
-# Executables
-*.swf
-*.air
-*.ipa
-*.apk
+# Model weights (downloaded automatically by ultralytics on first run)
+*.pt
+*.onnx
+*.engine
 
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+# Input videos can be large: keep the folder, ignore its contents
+videos/*
+!videos/.gitkeep
+
+# Annotated output videos are large; CSVs and screenshots ARE committed
+outputs/*.mp4
+outputs/*.avi
+
+# Editor / OS clutter
+.vscode/
+Thumbs.db

@@ -192,8 +192,13 @@ tracker:
 
 That's why Ultralytics' own `model.track()` defaults `conf` to **0.1** (in
 `ultralytics/engine/model.py`: *"trackers need low-confidence input"*), and why this
-project sets `CONF = 0.10` in `config.py`. Phase 4 measures what actually happens to
-track counts when `conf` is raised.
+project sets `CONF = 0.10` in `config.py`.
+
+**What Phase 4 measured** (`06_RESULTS.md`, CAVIAR corridor clips): going from 0.10 to
+0.25 (removing stage 2's input) changed little here — 0–4 fewer IDs per clip, one true
+OUT lost on one clip — because the corridor has moderate occlusion. Going to 0.50 cut IDs
+sharply (82 → 41) but mainly because far-away people were **no longer detected at all**
+(people-in-view fell below the ground truth). So the low threshold is the safe default.
 
 ## 11. How it maps to our code
 

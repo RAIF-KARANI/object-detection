@@ -179,7 +179,8 @@ A running record of every step: what was done, the commands, the result, and wha
 - **Command:** `python main.py --save` (camera 1, front-facing close-up)
 - **Result:** `1906 frames in 71.5 s (avg 26.7 FPS, 28.5 FPS after the first frame),
   14 unique track IDs, IN=4, OUT=3`. CSV: `outputs/tracks_camera1_20261118_191142.csv`.
-- **My hand count:** TODO: fill in
+- **My hand count:** not recorded. Accuracy was instead measured against CAVIAR's
+  hand-labelled ground truth in Phase 4 (more reliable than counting myself).
 - **What the saved video showed (checked frame by frame):**
   - **ID 1 OUT then IN 0.3 s apart:** I stood up right in front of the lens; the box filled
     the frame and its centre wobbled on the line (jitter). The once-per-direction rule capped it.
@@ -329,3 +330,30 @@ A running record of every step: what was done, the commands, the result, and wha
 - **Created:** `docs/05_EXPERIMENTS.md` (plan, method, caveats), `docs/06_RESULTS.md`
   (tables of measured numbers + interpretation). TROUBLESHOOTING #6 (MPEG-2 frame counts),
   #7 (benchmark contamination).
+
+---
+
+## Phase 5 — Final documentation (2026-11-18)
+
+### 5.1 Review for stale facts
+
+- Found and fixed: `lap` missing from the package table in `01_SETUP.md`; `03_HOW_BYTETRACK_WORKS.md`
+  said "Phase 4 measures…" → now states what it found; the live-test hand count was still
+  `TODO` → marked "not recorded" (accuracy came from ground truth instead); doc 04 linked
+  to doc 07 before it existed.
+
+### 5.2 New docs
+
+- `docs/07_LIMITATIONS_AND_IMPROVEMENTS.md` — each limitation tied to evidence from my runs
+  (ID switches 1.6–4.6×, jitter IDs, close-up camera, conf 0.50 losing far people, crowd /
+  moving-camera video, chair false positive, CPU variance) plus production fixes and privacy.
+  Corrected one claim before committing (I hadn't verified the shop assistant crossed the line).
+- `docs/08_INTERVIEW_QA.md` — 20 questions + "what went wrong".
+- `README.md` — summary, real demo image, results, install, run, options, line, structure, docs, credits.
+- Screenshot checklist added to `06_RESULTS.md`.
+
+### 5.3 Consistency checks (run, not read)
+
+- `python test_counter.py` → 12/12 pass (matches docs).
+- `main.py --help`, `benchmark.py --help` → options match the README tables.
+- Every relative link in README and docs → 0 broken.

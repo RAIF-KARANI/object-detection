@@ -113,5 +113,22 @@ visitors" from track IDs is not.** That matches the earlier visual checks.
 
 ## Screenshots
 
+Already in the repo:
+
 - `outputs/caviar_contact_sheet.jpg` — 9 annotated frames from the four CAVIAR clips
   (counting line, IN arrow, boxes, IDs, time in frame, trails, counts panel).
+
+Checklist for the report — save each in `outputs/screenshots/` (create the folder):
+
+| # | file name | what to capture | how |
+|---|---|---|---|
+| 1 | `01_gpu_check.png` | `python check_gpu.py` output showing `CUDA available : True` and the RTX 4060 | screenshot of the terminal |
+| 2 | `02_demo_window.png` | the live VisionTrack window on a CAVIAR clip, mid-crossing, panel readable | `python main.py --source videos\ThreePastShop1cor.mpg`, press Win+Shift+S around 45 s |
+| 3 | `03_crossing_log.png` | terminal lines `ID … crossed IN/OUT` and the 3-line summary | same run as #2, after it ends |
+| 4 | `04_tracks_csv.png` | a per-track CSV opened in Excel / VS Code | open `outputs/tracks_ShopAssistant2cor_*.csv` |
+| 5 | `05_tests_pass.png` | `python test_counter.py` → `All 12 tests passed` | terminal |
+| 6 | `06_benchmark.png` | `python benchmark.py --experiment device` output (GPU vs CPU) | on an idle machine |
+| 7 | `07_results_table.png` | `outputs/results.csv` conf rows (in / gt_in, unique_ids / gt_people, in_view_mae) | open in Excel, freeze the header |
+| 8 | `08_failure_case.png` *(optional)* | a jitter or ID-switch moment on CAVIAR to illustrate doc 07 | pause the `--save` video at a crossing pair |
+
+Don't include frames that show my face or the third-party phone video.

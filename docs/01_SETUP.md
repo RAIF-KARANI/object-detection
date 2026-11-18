@@ -88,6 +88,7 @@ pip install -r requirements.txt
 | `opencv-python` | 5.1.0.95 | Reading webcam/video, drawing boxes/lines/text, showing the window |
 | `numpy` | 2.5.4 | Array maths — every video frame is a NumPy array |
 | `pandas` | 3.1.1 | Writing results to CSV |
+| `lap` | 0.5.14 | Assignment solver ByteTrack uses to match tracks to detections (added in Phase 2: `pip install lap`) |
 
 Ultralytics also installs its own dependencies (matplotlib, scipy, polars, psutil,
 requests, …). The project code does not import them directly.

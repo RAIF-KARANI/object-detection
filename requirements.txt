@@ -10,3 +10,4 @@ ultralytics==8.4.215         # YOLO26n detector + built-in ByteTrack tracker
 opencv-python==5.1.0.95      # video/webcam input, drawing, display window
 numpy==2.5.4                 # array maths (each video frame is a NumPy array)
 pandas==3.1.1                # saving results to CSV
+lap==0.5.14                  # assignment solver ByteTrack uses to match tracks to detections

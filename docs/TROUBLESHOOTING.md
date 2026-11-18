@@ -30,6 +30,20 @@ the install. The install itself succeeded afterwards.
 
 ---
 
+## 3. ByteTrack needs the `lap` package (Phase 2)
+
+**Symptom (found by reading the code, before it caused an error):**
+`ultralytics/trackers/utils/matching.py` does `import lap`, and `lap` was not installed.
+
+**What it means:** `lap` solves the "assignment problem" — pairing each track with at most
+one detection at the lowest total cost. Without it, Ultralytics auto-installs it on the
+first tracking run.
+
+**Fix:** installed it on purpose and pinned it: `pip install lap` → `lap==0.5.14` in
+`requirements.txt`.
+
+---
+
 ## Reference: GPU not detected (`torch.cuda.is_available()` is `False`)
 
 Did not happen on this machine, but these are the usual causes, in order:

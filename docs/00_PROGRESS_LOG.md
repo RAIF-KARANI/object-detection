@@ -123,3 +123,72 @@ A running record of every step: what was done, the commands, the result, and wha
 ### 2.6 Docs
 
 - **Created:** `docs/02_HOW_YOLO_WORKS.md`, `docs/03_HOW_BYTETRACK_WORKS.md`.
+
+---
+
+## Phase 3 — My own counting logic (2026-11-18)
+
+### 3.1 Switch to the other camera — ~19:04
+
+- **Commands:** `Get-PnpDevice -Class Camera`, then an OpenCV probe of indices 0–4 and one
+  still frame from each working index.
+- **Result:** two physical cameras (Kreo Owl Camera, USB2.0 HD UVC WebCam) + the NVIDIA
+  Broadcast virtual camera. OpenCV: index 0 = side/room view (used in Phase 2),
+  index 1 = front-facing close-up, index 2 = black virtual camera (reports −1 FPS).
+- **Decision:** default `SOURCE = "1"` in `config.py`; any index works with `--source N`.
+- **Learned:** OpenCV only knows cameras by number, so look at a frame to know which is which.
+
+### 3.2 `counter.py`
+
+- **Created:** pure functions `side_of_line` (cross-product sign), `is_within_segment`
+  (dot-product projection), `crossing_direction` (sign flip → IN/OUT), and the
+  `LineCounter` class (last side, trails, first/last seen, counted sets, drawing, CSV rows).
+- **Design decisions:** store the last *non-zero* side; count only between the line's
+  ends; once per ID per direction; timestamps = frame ÷ FPS for files, real clock for cameras.
+
+### 3.3 `main.py` + `config.py`
+
+- **Added:** `--source --device --conf --imgsz --save`; line as fractions of the frame
+  (`LINE_START/LINE_END`), `TRAIL_LENGTH`, `OUTPUT_DIR`; console line per crossing;
+  per-track CSV every run; annotated MP4 with `--save`.
+- **Bug caught before running:** `cap.get(FPS) or 30` doesn't catch −1 (camera index 2
+  reports −1) → changed to `if video_fps <= 0`.
+
+### 3.4 Unit checks
+
+- **Command:** `python test_counter.py` → **All 10 tests passed** (cross-product examples,
+  flips, segment ends, jitter, exactly-on-line, two people, time in frame, trail length).
+
+### 3.5 Run on the sample clip
+
+- **Command:** `python main.py --source sample --save`
+- **Result:** IN = 2 (IDs 7, 11), OUT = 2 (IDs 4, 2), 31 confirmed IDs. Identical on a
+  second run. Checked a saved frame: line, IN arrow (pointing down), boxes, IDs,
+  time-in-frame labels, trails and totals all drawn correctly.
+- **Surprise:** first summary said **5.2 FPS**. Timed it: frame 0 takes **6,202 ms**
+  (one-time CUDA/tracker start-up), frame 1 267 ms, then ~45 ms. On a 62-frame clip the
+  start-up dominates the average. Summary now also prints FPS **after the first frame**:
+  32.5 FPS (including display + video writing).
+- **Learned:** always separate warm-up from steady-state when quoting speed (Phase 4 does this properly).
+
+### 3.6 Counting-line decision + live camera test
+
+- **Decision (mine):** vertical line down the middle (`(0.5, 0.0) → (0.5, 1.0)`) so walking
+  left/right past camera 1 crosses it. IN = right → left on screen (added a test proving it:
+  **11/11 tests pass**).
+- **Command:** `python main.py --save` (camera 1, front-facing close-up)
+- **Result:** `1906 frames in 71.5 s (avg 26.7 FPS, 28.5 FPS after the first frame),
+  14 unique track IDs, IN=4, OUT=3`. CSV: `outputs/tracks_camera1_20261118_191142.csv`.
+- **My hand count:** TODO: fill in
+- **What the saved video showed (checked frame by frame):**
+  - **ID 1 OUT then IN 0.3 s apart:** I stood up right in front of the lens; the box filled
+    the frame and its centre wobbled on the line (jitter). The once-per-direction rule capped it.
+  - **ID 9 was my chair** — a false "person" tracked for 6.3 s at `conf=0.10`. Not counted
+    (never crossed), but a real false positive.
+  - **ID 56 OUT then IN:** sitting close, the large box changed shape and its centre
+    crossed the middle line without me really walking.
+  - IDs 2, 6, 10, 14, 36, 40 lived 1–5 frames: partial bodies at the frame edge / flicker.
+- **Learned:** the counter logic is right, but a close-up camera is a bad counting setup:
+  huge boxes clipped at the frame edges make centres jump. Real footfall cameras are
+  mounted high/overhead and far from the door — film the Phase 4 video from a distance.
+  (Frames from this run show my face, so they are not saved in the repo.)

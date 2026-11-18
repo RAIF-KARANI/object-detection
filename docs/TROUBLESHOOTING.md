@@ -44,6 +44,32 @@ first tracking run.
 
 ---
 
+## 4. Some cameras report a frame rate of −1 (Phase 3)
+
+**Symptom:** the camera probe showed index 2 (NVIDIA Broadcast virtual camera) reporting
+`-1` FPS.
+
+**What it means:** OpenCV couldn't read the frame rate. `fps or 30.0` only replaces `0`;
+in Python `-1` counts as "true", so −1 would have been used (negative timestamps, broken
+saved video).
+
+**Fix:** `if video_fps <= 0: video_fps = 30.0` in `main.py`.
+
+---
+
+## 5. Average FPS looked far too low on the short sample clip (Phase 3)
+
+**Symptom:** summary said 5.2 FPS on the 62-frame sample clip, vs ~56 FPS in Phase 2.
+
+**What it means:** the very first `model.track()` call took 6.2 s (CUDA start-up, loading
+GPU kernels, creating the tracker). On a 2-second clip that one-time cost dominates the
+average. Not a real slowdown.
+
+**Fix:** the summary now also reports FPS after the first frame (32.5 FPS on this run,
+including display and video writing). Benchmarks in Phase 4 skip warm-up frames.
+
+---
+
 ## Reference: GPU not detected (`torch.cuda.is_available()` is `False`)
 
 Did not happen on this machine, but these are the usual causes, in order:

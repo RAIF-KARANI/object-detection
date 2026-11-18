@@ -10,8 +10,10 @@ can override some of them at run time.
 MODEL = "yolo26n.pt"
 
 # --- Input ------------------------------------------------------------------
-# "0" = default webcam. Can also be a video file path or an http(s) URL.
-SOURCE = "0"
+# A digit = camera index. On this laptop: 0 = side/room view, 1 = front-facing close-up,
+# 2 = NVIDIA Broadcast virtual camera (black unless the Broadcast app is running).
+# Can also be "sample", a video file path, or an http(s) URL.
+SOURCE = "1"
 
 # Ultralytics' short public demo clip (people walking), used when no own video exists.
 SAMPLE_VIDEO_URL = "https://github.com/ultralytics/assets/releases/download/v0.0.0/solutions_ci_demo.mp4"
@@ -30,3 +32,20 @@ CONF = 0.10
 # --- Tracking ---------------------------------------------------------------
 # Ultralytics' built-in ByteTrack configuration file (thresholds explained in docs/03).
 TRACKER = "bytetrack.yaml"
+
+# --- Counting line (my own logic, counter.py) ---------------------------------
+# Two points A -> B as FRACTIONS of the frame (x = 0 left .. 1 right, y = 0 top .. 1 bottom),
+# so the same setting works for any resolution.
+# Default (chosen by me for the camera test): VERTICAL line down the middle, top -> bottom,
+# so walking left/right past the camera crosses it, like passing through a doorway.
+# Direction: IN = crossing from the negative to the positive side of A->B.
+# For this top -> bottom line, the + side is the LEFT half, so IN = moving RIGHT -> LEFT on screen.
+# (A left -> right horizontal line would give IN = moving DOWN.) Swap A and B to flip IN/OUT.
+LINE_START = (0.5, 0.0)
+LINE_END = (0.5, 1.0)
+
+# Number of recent centre points drawn as each person's trail.
+TRAIL_LENGTH = 30
+
+# Where CSVs and saved videos go.
+OUTPUT_DIR = "outputs"

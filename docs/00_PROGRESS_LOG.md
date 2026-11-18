@@ -268,3 +268,64 @@ A running record of every step: what was done, the commands, the result, and wha
 - **Learned:** this pipeline is built for a fixed, high camera (like CAVIAR). Moving cameras
   need camera-motion compensation; dense crowds need crowd-counting methods (density maps)
   or overhead views — notes for doc 07.
+
+---
+
+## Phase 4 — Experiments (2026-11-18)
+
+### 4.1 Ground truth instead of a phone video
+
+- **Decision (mine):** use CAVIAR's hand-labelled ground truth for the accuracy check
+  instead of recording and hand-counting a phone video.
+- **Downloaded** (into `videos/ground_truth/`, git-ignored): `csa2gt.xml` (9.9 MB),
+  `c3ps1gt.xml` (14 MB), `ceecp1gt.xml` (1.2 MB), `cwbs1gt.xml` (9.7 MB).
+- **Checked:** ground-truth frames 0…N−1 match the videos exactly (3700 / 1650 / 383 / 2360).
+  Real people per clip: 18 / 14 / 5 / 17.
+- **Idea:** feed the ground-truth boxes through my own `LineCounter` → the true IN/OUT for the
+  same line and rules, so system and truth are compared like for like.
+
+### 4.2 `benchmark.py`
+
+- Headless runs; times `model.track()` + copying boxes off the GPU; skips 10 warm-up frames;
+  records Ultralytics' preprocess / inference / postprocess split; fresh model per run.
+- `--experiment device` (GPU vs CPU, 500 frames, 3 runs each) and `--experiment conf`
+  (0.10 / 0.25 / 0.50 × 4 clips vs ground truth). Results → `outputs/results.csv`.
+- Uses only the standard library (`xml.etree`) to read the XML — no new packages.
+
+### 4.3 GPU vs CPU — what went wrong first
+
+- First runs: GPU 23.6 → 17.1 ms, then 33–45 ms; CPU 29–115 ms; the CPU once beat the GPU.
+- Checked: on AC, "Turbo" plan. `nvidia-smi` showed the GPU 52% busy with nothing of mine
+  running; per-process GPU counters showed **another `python` at ~48%** — my own `main.py`
+  run on another video. Discarded those numbers (TROUBLESHOOTING #7).
+- **Learned:** benchmark on a quiet machine, check `nvidia-smi` first, repeat runs.
+
+### 4.4 GPU vs CPU — quiet machine
+
+- **Command:** `python benchmark.py --experiment device`
+- **GPU:** 11.5 / 11.8 / 11.5 ms (≈ 86 FPS); inference 8.1–8.3 ms; tracking+other ~1.3 ms.
+- **CPU:** 26.9 / 58.5 / 113.5 ms. Extra check (two more CPU runs while sampling CPU clock):
+  97.7 ms at ~100–120% of base clock, 27.0 ms at ~165% → speed follows clock/core scheduling
+  on this hybrid i7-13650HX (6 P-cores + 8 E-cores).
+- Counts identical on every run and both devices.
+- **Learned:** my guess that tracking overhead limits the GPU was wrong — measured: inference is
+  ~70% of GPU time, ByteTrack ~1.3 ms. The GPU's real advantage is predictability.
+
+### 4.5 Confidence threshold + accuracy
+
+- **Command:** `python benchmark.py --experiment conf`
+- **Default (conf 0.10) accuracy:** line crossings IN 20 / 20 true, OUT 11 / 12 (3 per-clip
+  errors out of 32); people-in-view error 0.80–0.98 per frame; 1.6–4.6 track IDs per real person.
+- **conf effect:** IDs fall as conf rises (82 → 78 → 41), but at 0.50 people-in-view falls
+  below the truth (missed far-away people). Line counts barely change. Speed unchanged
+  (10.9–11.3 ms on quiet runs).
+- **Surprise:** later runs slowed (14.8–43.9 ms, GPU inference time rising) — machine in use;
+  cause not identifiable afterwards. Counts unaffected; those timings not used.
+- **Learned:** my prediction (higher conf → more ID switches) was wrong for this data; the
+  dominant effect is losing detections entirely. Fewer IDs ≠ better tracking.
+
+### 4.6 Docs
+
+- **Created:** `docs/05_EXPERIMENTS.md` (plan, method, caveats), `docs/06_RESULTS.md`
+  (tables of measured numbers + interpretation). TROUBLESHOOTING #6 (MPEG-2 frame counts),
+  #7 (benchmark contamination).

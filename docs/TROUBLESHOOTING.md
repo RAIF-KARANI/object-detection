@@ -70,6 +70,34 @@ including display and video writing). Benchmarks in Phase 4 skip warm-up frames.
 
 ---
 
+## 6. OpenCV reports the wrong frame count for old MPEG-2 files (Phase 3)
+
+**Symptom:** CAVIAR clips reported 41 / 18 / 4 / 26 frames; reading them gave 3700 / 1650 / 383 / 2360.
+
+**What it means:** `.mpg` (MPEG-2) files often lack a frame index, so `CAP_PROP_FRAME_COUNT`
+is a guess, and seeking to a frame number is unreliable too.
+
+**Fix:** count frames by reading to the end; extract frames by reading sequentially.
+
+---
+
+## 7. Benchmark speeds jumped around between identical runs (Phase 4)
+
+**Symptom:** same clip, same settings, 500 frames: GPU 17.1 – 44.5 ms/frame, CPU 28.6 – 114.6
+ms/frame across runs (CPU once *faster* than the GPU). Detections were identical every run
+(15 IDs, avg 5.19 in view), so only speed changed.
+
+**What it means:** something else was using the machine. Checks: laptop on AC, "Turbo"
+power plan — fine. But with no benchmark running, `nvidia-smi` showed the GPU at 52% use /
+58 W, and Windows' per-process GPU counters showed **another `python` process at ~48% GPU**:
+I was running `main.py` on another video at the same time.
+
+**Fix:** benchmark on a quiet machine — no other GPU/CPU-heavy programs (other model runs,
+games, NVIDIA Broadcast effects, video playback). Check first with `nvidia-smi` (GPU use
+should be near 0%). Repeat each measurement (3 runs) and report the spread, not one number.
+
+---
+
 ## Reference: GPU not detected (`torch.cuda.is_available()` is `False`)
 
 Did not happen on this machine, but these are the usual causes, in order:

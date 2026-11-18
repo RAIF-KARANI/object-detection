@@ -249,3 +249,22 @@ A running record of every step: what was done, the commands, the result, and wha
   5, 8 and 8 people in view matched the boxes I could count. "In view" is accurate;
   "unique" is inflated by ID switches.
 - **Learned:** a UI sized in fixed pixels breaks on other resolutions — scale it to the frame.
+
+### 3.9 Stress test: handheld phone video of a dense crowd
+
+- **Video:** a WhatsApp/Instagram repost on my laptop — handheld, vertical 478×850, 30 FPS,
+  2616 frames (87.2 s), a dense crowd with police. Third-party footage of identifiable
+  people, so it was processed **locally only**: no frames, video or CSV from it are in the repo,
+  and it is not part of my submission.
+- **Command:** `python main.py --source "<path>\VID-20260917-WA0017.mp4" --save`
+- **Result:** `2616 frames in 88.1 s (31.1 FPS after the first frame)`, IN = 29, OUT = 31,
+  **peak 14 in view, average 6.9, 302 unique track IDs**.
+- **What the frames showed:**
+  - Near, large people are detected well; the background crowd (small, overlapping heads)
+    is mostly missed → "in view" was 5–13 when 20–40 people were visible → **under-counts dense crowds**.
+  - **IN/OUT is meaningless here:** the line is fixed to the screen, but the phone pans, so
+    people "cross" it without moving. Line counting needs a **fixed camera**.
+  - 302 unique IDs (and shown IDs above 1300): camera motion + occlusion break tracks constantly.
+- **Learned:** this pipeline is built for a fixed, high camera (like CAVIAR). Moving cameras
+  need camera-motion compensation; dense crowds need crowd-counting methods (density maps)
+  or overhead views — notes for doc 07.

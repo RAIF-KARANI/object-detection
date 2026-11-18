@@ -25,17 +25,23 @@ Defined in `config.py` as two points **as fractions of the frame**, so the same
 setting works at any resolution:
 
 ```python
-LINE_START = (0.5, 0.0)   # A: top edge, half-way across
-LINE_END   = (0.5, 1.0)   # B: bottom edge, half-way across
+LINE_START = (0.0, 0.6)   # A: left edge, 60% of the way down
+LINE_END   = (1.0, 0.6)   # B: right edge, 60% of the way down
 ```
 
 `main.py` converts them to pixels once it knows the video size
-(e.g. 640×480 → A = (320, 0), B = (320, 480)).
+(e.g. CAVIAR 384×288 → A = (0, 172.8), B = (384, 172.8)).
 
-**Why vertical (my choice):** the live test camera faces me, so walking left/right past
-it is the natural "doorway" movement. The first sample-clip run (section 12) used a
-horizontal line `(0.0, 0.5) → (1.0, 0.5)` instead. For my own doorway video I'll place
-the line where the doorway is.
+**Where the line went, and why (my choices):**
+
+| when | line | reason |
+|---|---|---|
+| first sample-clip run | horizontal middle `(0, 0.5) → (1, 0.5)` | first default |
+| live camera test | vertical middle `(0.5, 0) → (0.5, 1)` | front-facing camera: walk left/right across it |
+| **CAVIAR corridor (current)** | **horizontal `(0, 0.6) → (1, 0.6)`** | camera looks down a shopping-centre corridor; people walk toward/away from it, so a line *across* the corridor floor is what they cross |
+
+The right line depends entirely on the camera view — the same code measures different
+things depending on where the line is.
 
 ## 2. Which side of the line is a point on? — the cross product
 

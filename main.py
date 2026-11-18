@@ -61,12 +61,14 @@ def resolve_source(source):
 
 def draw_boxes(frame, track_ids, boxes_xyxy, counter):
     """Draw each tracked person's box and an 'ID n  t s' label (time in frame)."""
+    s = frame.shape[1] / 640                           # scale label size to the frame width
     for track_id, (x1, y1, x2, y2) in zip(track_ids, boxes_xyxy):
         colour = colour_for_id(track_id)
         p1, p2 = (int(x1), int(y1)), (int(x2), int(y2))   # pixel coords must be integers
         cv2.rectangle(frame, p1, p2, colour, 2)
         label = f"ID {track_id}  {counter.seconds_in_frame(track_id):.1f}s"
-        cv2.putText(frame, label, (p1[0], p1[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 2)
+        cv2.putText(frame, label, (p1[0], p1[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.6 * s, colour,
+                    max(1, round(2 * s)))
 
 
 def main():
@@ -150,8 +152,9 @@ def main():
         fps = 1.0 / (now - prev_time)
         prev_time = now
         fps_smooth = fps if fps_smooth == 0 else 0.9 * fps_smooth + 0.1 * fps
-        cv2.putText(frame, f"FPS: {fps_smooth:.1f}", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+        s = width / 640                                # same size scaling as the counts panel
+        cv2.putText(frame, f"FPS: {fps_smooth:.1f}", (int(10 * s), int(30 * s)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9 * s, (0, 0, 255), max(1, round(2 * s)))
 
         if writer is not None:
             writer.write(frame)

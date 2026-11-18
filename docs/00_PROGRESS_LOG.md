@@ -208,3 +208,44 @@ A running record of every step: what was done, the commands, the result, and wha
   15.1 on these runs (vs 32.5 earlier) — run-to-run variation, measured properly in Phase 4.
 - **Learned:** "in view" is robust (no IDs needed); "unique" inherits every ID switch and
   false track, so it over-counts (14 IDs for 1 person in the live test).
+
+### 3.8 Stock footage: CAVIAR shopping-centre corridor
+
+- **Why (my decision):** my camera only ever sees me; I want scenes with many people.
+  No training needed — YOLO26n is already trained on COCO (which includes "person"); we
+  just run inference on new video.
+- **Source:** CAVIAR dataset, second set (Lisbon shopping-centre corridor, high camera),
+  `homepages.inf.ed.ac.uk/rbf/CAVIARDATA2/`. EC-funded CAVIAR project, IST 2001 37540.
+  Downloaded into `videos/` (git-ignored): ShopAssistant2cor (20.3 MB), ThreePastShop1cor
+  (9.1 MB), EnterExitCrossingPaths1cor (2.2 MB), WalkByShop1cor (13.0 MB).
+- **Surprise:** OpenCV reported 41 / 18 / 4 / 26 frames — wrong. Reading every frame gave
+  **3700 / 1650 / 383 / 2360 frames** at 25 FPS, 384×288 (≈ 148 / 66 / 15 / 94 s).
+  Old MPEG-2 files have no reliable frame index → never trust the metadata, count frames.
+- **Line decision (mine):** people walk toward/away from the camera, so the line goes
+  **across the corridor**: `(0.0, 0.6) → (1.0, 0.6)`; IN = toward the camera (down).
+- **Commands:** `python main.py --source videos\<clip>.mpg --save` for each clip.
+- **Results (first run):**
+
+  | clip | IN | OUT | peak in view | avg in view | unique IDs | FPS after 1st frame |
+  |---|---|---|---|---|---|---|
+  | ShopAssistant2cor | 10 | 4 | 9 | 3.9 | 82 | 38.0 |
+  | ThreePastShop1cor | 5 | 2 | 9 | 5.6 | 45 | 38.8 |
+  | EnterExitCrossingPaths1cor | 1 | 1 | 6 | 4.4 | 8 | 23.5 |
+  | WalkByShop1cor | 4 | 4 | 7 | 4.0 | 46 | 17.1 |
+
+- **What the frames showed:** detection works well even at 384×288, including groups
+  side by side. **Unique IDs badly over-count** (82 IDs for roughly 10–15 real people in
+  ShopAssistant2cor): far-away people are ~20 px tall and groups occlude each other, so
+  tracks fragment into new IDs. Several **jitter pairs** (same ID IN + OUT within ~1 s,
+  e.g. IDs 3, 177, 171, 179) — one fake count each. "In view" is the more trustworthy number.
+- **Display bug:** the counts panel (sized for 640 px) covered ~40% of these 384 px frames,
+  hiding the far corridor. Fixed: panel, FPS and labels now scale with frame width and the
+  panel is semi-transparent. Drawing only — counts unaffected (re-render to confirm).
+- **Re-render result:** every count identical to the first run (IN/OUT, peak, average,
+  unique) → results are repeatable. FPS after the first frame this time: 27.0 / 30.6 /
+  29.8 / 31.7 (vs 38.0 / 38.8 / 23.5 / 17.1 before) → speed varies a lot between runs on
+  this laptop; Phase 4 must average properly.
+- **Checked "in view" by eye** on the contact sheet (`outputs/caviar_contact_sheet.jpg`):
+  5, 8 and 8 people in view matched the boxes I could count. "In view" is accurate;
+  "unique" is inflated by ID switches.
+- **Learned:** a UI sized in fixed pixels breaks on other resolutions — scale it to the frame.

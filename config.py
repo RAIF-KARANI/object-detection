@@ -36,13 +36,15 @@ TRACKER = "bytetrack.yaml"
 # --- Counting line (my own logic, counter.py) ---------------------------------
 # Two points A -> B as FRACTIONS of the frame (x = 0 left .. 1 right, y = 0 top .. 1 bottom),
 # so the same setting works for any resolution.
-# Default (chosen by me for the camera test): VERTICAL line down the middle, top -> bottom,
-# so walking left/right past the camera crosses it, like passing through a doorway.
+# Default (my choice for the CAVIAR shopping-centre corridor clips): HORIZONTAL line across
+# the corridor floor at 60% height, drawn left -> right. People walk toward/away from the camera,
+# so they cross it.
 # Direction: IN = crossing from the negative to the positive side of A->B.
-# For this top -> bottom line, the + side is the LEFT half, so IN = moving RIGHT -> LEFT on screen.
-# (A left -> right horizontal line would give IN = moving DOWN.) Swap A and B to flip IN/OUT.
-LINE_START = (0.5, 0.0)
-LINE_END = (0.5, 1.0)
+# For a left -> right line the + side is BELOW it, so IN = moving DOWN = walking TOWARD the camera.
+# (Earlier camera test used a vertical line (0.5, 0.0) -> (0.5, 1.0): IN = right -> left on screen.)
+# Swap A and B to flip IN/OUT.
+LINE_START = (0.0, 0.6)
+LINE_END = (1.0, 0.6)
 
 # Number of recent centre points drawn as each person's trail.
 TRAIL_LENGTH = 30

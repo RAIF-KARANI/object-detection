@@ -184,12 +184,20 @@ class LineCounter:
                 cv2.line(frame, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), colour_for_id(track_id), 2)
 
     def draw_stats(self, frame):
-        """Draw the line counts and whole-frame counts on a dark panel (call AFTER the boxes)."""
-        cv2.rectangle(frame, (0, 0), (360, 110), (0, 0, 0), -1)   # thickness -1 = filled
-        cv2.putText(frame, f"IN: {self.in_count}  OUT: {self.out_count}", (10, 65),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, TEXT_COLOUR, 2)
+        """Draw the line counts and whole-frame counts on a see-through dark panel (call AFTER the boxes).
+
+        Sizes are designed for a 640 px wide frame and scaled to the real width,
+        so the panel doesn't cover half of a small (e.g. 384 px) video.
+        """
+        s = frame.shape[1] / 640                        # scale factor: frame width / 640
+        thick = max(1, round(2 * s))                    # text thickness must be a whole number >= 1
+        panel = frame.copy()
+        cv2.rectangle(panel, (0, 0), (int(360 * s), int(110 * s)), (0, 0, 0), -1)   # -1 = filled
+        cv2.addWeighted(panel, 0.6, frame, 0.4, 0, dst=frame)   # 60% panel + 40% video = see-through
+        cv2.putText(frame, f"IN: {self.in_count}  OUT: {self.out_count}", (int(10 * s), int(65 * s)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9 * s, TEXT_COLOUR, thick)
         cv2.putText(frame, f"In view: {self.in_view}  Peak: {self.peak_in_view}  Unique: {self.unique_count}",
-                    (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, TEXT_COLOUR, 2)
+                    (int(10 * s), int(100 * s)), cv2.FONT_HERSHEY_SIMPLEX, 0.7 * s, TEXT_COLOUR, thick)
 
     def rows(self):
         """One dict per track ID, ready to become a CSV row."""

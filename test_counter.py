@@ -103,6 +103,19 @@ def test_vertical_line_in_is_right_to_left():
     assert (c.in_count, c.out_count) == (1, 0)
 
 
+def test_whole_frame_counts():
+    """In view = boxes this frame; peak = max; average includes empty frames; unique = distinct IDs."""
+    c = LineCounter(A, B)
+    c.update([1, 2], [(150, 100), (300, 100)], 0)          # 2 people
+    c.update([1, 2, 3], [(150, 100), (300, 100), (400, 100)], 1)   # 3 people
+    c.update([], [], 2)                                    # empty frame
+    c.update([3, 4], [(400, 100), (450, 100)], 3)          # 2 people (ID 4 is new)
+    assert c.in_view == 2                                  # last frame
+    assert c.peak_in_view == 3
+    assert c.average_in_view == (2 + 3 + 0 + 2) / 4        # = 1.75
+    assert c.unique_count == 4                             # IDs 1, 2, 3, 4
+
+
 def test_trail_keeps_only_last_n_points():
     """Trail length is capped by deque(maxlen=N)."""
     c = LineCounter(A, B, trail_length=3)

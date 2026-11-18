@@ -141,8 +141,9 @@ def main():
             print(f"[{timestamp:6.1f}s] ID {track_id} crossed {direction}  "
                   f"(IN={counter.in_count}, OUT={counter.out_count})")
 
-        counter.draw(frame, track_ids)
+        counter.draw(frame, track_ids)                 # line + IN arrow + trails
         draw_boxes(frame, track_ids, boxes_xyxy, counter)
+        counter.draw_stats(frame)                      # counts panel last, so boxes can't cover it
 
         # FPS = 1 / time taken for this whole loop iteration (read + model + drawing)
         now = time.perf_counter()
@@ -177,8 +178,10 @@ def main():
     # Speed without the first frame's start-up cost (that's the speed you see while it runs)
     steady_fps = (frame_index - 1) / (end_time - warm_time) if frame_index > 1 else 0.0
     print(f"Summary: {frame_index} frames in {elapsed:.1f} s (avg {avg_fps:.1f} FPS, "
-          f"{steady_fps:.1f} FPS after the first frame), {len(counter.first_seen)} unique track IDs, "
-          f"IN={counter.in_count}, OUT={counter.out_count}")
+          f"{steady_fps:.1f} FPS after the first frame)")
+    print(f"Line counts:  IN={counter.in_count}, OUT={counter.out_count}")
+    print(f"Whole frame:  peak {counter.peak_in_view} people in view, "
+          f"average {counter.average_in_view:.1f} in view, {counter.unique_count} unique track IDs")
     print(f"Saved per-track CSV: {csv_path}")
     if writer is not None:
         print(f"Saved annotated video: {video_path}")

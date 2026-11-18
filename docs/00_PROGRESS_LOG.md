@@ -192,3 +192,19 @@ A running record of every step: what was done, the commands, the result, and wha
   huge boxes clipped at the frame edges make centres jump. Real footfall cameras are
   mounted high/overhead and far from the door — film the Phase 4 video from a distance.
   (Frames from this run show my face, so they are not saved in the repo.)
+
+### 3.7 Change: count people in the whole frame too
+
+- **Why (my request):** IN/OUT only measures a doorway; I also want "how many people are
+  here" — occupancy.
+- **Added to `counter.py`:** `in_view` (boxes this frame), `peak_in_view`, `average_in_view`
+  (includes empty frames), `unique_count` (distinct track IDs); `draw_stats()` draws them on
+  a dark panel after the boxes. `main.py` summary prints them. New test → **12/12 pass**.
+- **First attempt:** the counts text was covered by ID labels in the crowded sample clip →
+  moved to a filled panel drawn last.
+- **Command:** `python main.py --source sample --save` (vertical line)
+- **Result:** IN = 0, OUT = 0; **peak 26 in view, average 23.9, 31 unique IDs** — same on
+  two runs; peak 26 matches the Phase 2 headless check. FPS after first frame was 17.0 and
+  15.1 on these runs (vs 32.5 earlier) — run-to-run variation, measured properly in Phase 4.
+- **Learned:** "in view" is robust (no IDs needed); "unique" inherits every ID switch and
+  false track, so it over-counts (14 IDs for 1 person in the live test).

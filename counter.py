@@ -5,7 +5,8 @@ What it does, per tracked person (track ID):
   2. detects a crossing when that side flips between frames,
   3. counts IN or OUT depending on the flip direction, at most once per ID per direction,
   4. keeps a short trail of recent centre points for drawing,
-  5. records when the ID was first/last seen -> time in frame.
+  5. records when the ID was first/last seen -> time in frame,
+  6. counts people in the WHOLE frame: in view now, peak, average, unique IDs (occupancy).
 
 Points are (x, y) in pixels. In images y grows DOWNWARDS (row 0 is the top).
 """
@@ -93,6 +94,22 @@ class LineCounter:
         self.counted_in = set()   # IDs already counted IN  (a set can't hold duplicates)
         self.counted_out = set()  # IDs already counted OUT
 
+        # Whole-frame counts (occupancy)
+        self.in_view = 0          # people tracked in the current frame
+        self.peak_in_view = 0     # highest in_view so far
+        self.in_view_total = 0    # sum of in_view over all frames (for the average)
+        self.frame_count = 0      # frames processed
+
+    @property
+    def unique_count(self):
+        """Distinct track IDs ever seen. NOTE: an ID switch makes one person count twice."""
+        return len(self.first_seen)
+
+    @property
+    def average_in_view(self):
+        """Mean number of people in view per frame."""
+        return self.in_view_total / self.frame_count if self.frame_count else 0.0
+
     @property
     def in_count(self):
         """Number of people counted IN."""
@@ -114,6 +131,12 @@ class LineCounter:
         timestamp: time of this frame in seconds.
         Returns the crossings counted in this frame, e.g. [(4, "IN")].
         """
+        # --- whole-frame counts: one tracked box = one person in view ---
+        self.in_view = len(track_ids)
+        self.peak_in_view = max(self.peak_in_view, self.in_view)
+        self.in_view_total += self.in_view
+        self.frame_count += 1
+
         events = []
         for track_id, centre in zip(track_ids, centres):
             # --- time in frame ---
@@ -141,7 +164,7 @@ class LineCounter:
         return events
 
     def draw(self, frame, active_ids):
-        """Draw the counting line, an IN arrow, trails of visible IDs and the IN/OUT totals."""
+        """Draw the counting line, an IN arrow and the trails of visible IDs."""
         a = tuple(int(v) for v in self.line_start)
         b = tuple(int(v) for v in self.line_end)
         cv2.line(frame, a, b, LINE_COLOUR, 2)
@@ -160,8 +183,13 @@ class LineCounter:
             for p, q in zip(points, points[1:]):       # join consecutive centre points
                 cv2.line(frame, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), colour_for_id(track_id), 2)
 
+    def draw_stats(self, frame):
+        """Draw the line counts and whole-frame counts on a dark panel (call AFTER the boxes)."""
+        cv2.rectangle(frame, (0, 0), (360, 110), (0, 0, 0), -1)   # thickness -1 = filled
         cv2.putText(frame, f"IN: {self.in_count}  OUT: {self.out_count}", (10, 65),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, TEXT_COLOUR, 2)
+        cv2.putText(frame, f"In view: {self.in_view}  Peak: {self.peak_in_view}  Unique: {self.unique_count}",
+                    (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, TEXT_COLOUR, 2)
 
     def rows(self):
         """One dict per track ID, ready to become a CSV row."""

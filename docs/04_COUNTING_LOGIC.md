@@ -13,9 +13,10 @@ a list of `(track_id, box)`; `counter.py` turns that into footfall numbers.
                        ├─ did the side flip?        → IN / OUT
                        ├─ already counted?          (one count per ID per direction)
                        ├─ trail                     (last 30 centres)
-                       └─ first/last seen           → time in frame
+                       ├─ first/last seen           → time in frame
+                       └─ how many boxes now?       → in view / peak / average / unique
                                    ▼
-                  draw line, arrow, trails, IN/OUT ── and at the end ──► CSV
+        draw line, arrow, trails, boxes, then the counts panel ── at the end ──► CSV + summary
 ```
 
 ## 1. The counting line
@@ -175,7 +176,35 @@ Where the timestamp comes from:
 `frames_seen` (how many frames the ID was actually detected) is also saved; if it's much
 smaller than `seconds_in_frame × FPS`, the person was hidden for part of that time.
 
-## 10. CSV output
+## 10. Whole-frame counts (occupancy)
+
+The line only tells me who walked **through** a point. Retail also asks *"how busy is
+this area?"* — so the counter also counts people in the **whole frame**:
+
+| number | how it's computed | question it answers |
+|---|---|---|
+| **In view** | `len(track_ids)` this frame | How many people are here right now? |
+| **Peak** | `max(peak, in_view)` every frame | When was it busiest, and how busy? |
+| **Average in view** | sum of `in_view` over all frames ÷ number of frames | How busy is it typically? |
+| **Unique** | number of distinct track IDs seen (`len(first_seen)`) | Roughly how many different people passed? |
+
+Details that matter:
+
+- `update()` is called on **every** frame, including frames with nobody in them (empty
+  list), so empty frames pull the average down correctly. Example from the test:
+  frames with 2, 3, 0, 2 people → average (2 + 3 + 0 + 2) ÷ 4 = **1.75**.
+- **In view is the most reliable number**: it only needs a detection in that frame, not a
+  stable ID. It *does* include false detections (e.g. my chair in the live test) and it
+  misses people fully hidden behind others.
+- **Unique is the least reliable**: it counts *track IDs*. Every ID switch adds a fake
+  extra person, and every false track (the chair) too. In my 71-second solo camera test
+  there were 14 IDs for 1 real person. Better tracking / re-identification fixes this
+  (doc 07).
+- On screen, Unique is the running total so far; the end-of-run summary shows the final one.
+- The counts are drawn on a **dark panel after the boxes**, so ID labels can't cover them
+  in a crowded scene (they did in the first version).
+
+## 11. CSV output
 
 Every run writes `outputs/tracks_<source>_<date>_<time>.csv`, one row per track ID:
 
@@ -187,9 +216,9 @@ Every run writes `outputs/tracks_<source>_<date>_<time>.csv`, one row per track 
 | `frames_seen` | number of frames the ID was present |
 | `direction_crossed` | `IN`, `OUT`, `IN+OUT` or empty |
 
-## 11. Tests (`test_counter.py`)
+## 12. Tests (`test_counter.py`)
 
-Run `python test_counter.py`. 11 checks on made-up points, all passing:
+Run `python test_counter.py`. 12 checks on made-up points, all passing:
 
 | test | checks |
 |---|---|
@@ -204,11 +233,19 @@ Run `python test_counter.py`. 11 checks on made-up points, all passing:
 | `test_time_in_frame_and_rows` | 0.0 → 1.0 s, CSV row contents |
 | `test_vertical_line_in_is_right_to_left` | default vertical line: left half is +1, right→left = IN |
 | `test_trail_keeps_only_last_n_points` | deque keeps only the last N |
+| `test_whole_frame_counts` | in view, peak, average (with an empty frame) = 1.75, unique |
 
-## 12. First real run (sample clip)
+## 13. Real runs (sample clip)
 
 `python main.py --source sample --save` — 62 frames, **horizontal** line across the middle
 (the default at that time; since changed to vertical):
 **IN = 2, OUT = 2** (IDs 7 and 11 IN; IDs 4 and 2 OUT), 31 confirmed track IDs.
-Running it twice gave identical counts. Accuracy against a hand count is checked in
-Phase 4 on my own doorway video.
+Running it twice gave identical counts.
+
+Same clip with the **vertical** line + whole-frame counts:
+**IN = 0, OUT = 0**, **peak 26 in view, average 23.9 in view, 31 unique IDs**
+(identical on two runs; peak 26 also matches the separate Phase 2 check).
+Zero crossings because people in this clip mostly walk up/down the frame, which crosses
+a horizontal line but not a vertical one — **where the line goes decides what is measured**.
+
+Accuracy against a hand count is checked in Phase 4 on my own doorway video.
